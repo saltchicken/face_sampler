@@ -5,7 +5,7 @@ from time import time
 import matplotlib.pyplot as plt
 from pyesrgan import run_esrgan
 import tempfile
-
+import subprocess, os
 
 def facecenter_squarecrop_image(image, face_center):
     height, width, _ = image.shape
@@ -63,6 +63,9 @@ def facecenter_squarecrop_image(image, face_center):
 def run_face_sampler(input, output):
     image = cv2.imread(input, cv2.IMREAD_UNCHANGED)
     face_center = hogDetectFaces(image)
+    if face_center == False:
+        print('no face found: skipping')
+        return False
     cropped_image = facecenter_squarecrop_image(image, face_center)
     with tempfile.TemporaryDirectory() as temp_dir:
         cv2.imwrite(temp_dir + '/saved.png', cropped_image)
@@ -73,6 +76,28 @@ def run_face_sampler(input, output):
         else:
             resized_image = cv2.resize(cropped_image, (512,512))
             cv2.imwrite(output, resized_image)
+            
+def video_to_frames(input, output, rate):
+    ffmpeg_command = [
+        'ffmpeg',
+        '-i', input,
+        '-r', rate,
+        output + '/frames' + '/%05d.png'
+    ]
+
+    # Run the ffmpeg command
+    try:
+        subprocess.run(ffmpeg_command, check=True)
+        print(f'Conversion complete.')
+    except subprocess.CalledProcessError as e:
+        print(f'Error during conversion: {e}')
+        
+def run_face_sampler_on_folder(input):
+    directory_path = 'outputfolder/frames'
+    all_items = os.listdir(directory_path)
+    file_names = [item for item in all_items if os.path.isfile(os.path.join(directory_path, item))]
+    for file_name in file_names:
+        run_face_sampler(directory_path + '/' + file_name, file_name)
     
 def main():
     parser = argparse.ArgumentParser(description="Sample face from an image and force resolution to 512 X 512")
@@ -96,8 +121,9 @@ def hogDetectFaces(image):
     # output_image = image.copy()
     imgRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = hog_face_detector(imgRGB, 0)
-    # print(results)
+    print(results)
 
+    # TODO modify this for multiple faces. Right now it simply returning the last one it finds discarding others.
     for bbox in results:
         x1 = bbox.left()
         y1 = bbox.top()
@@ -108,8 +134,10 @@ def hogDetectFaces(image):
         yCenter = int((y1 + y2) / 2)
         # cv2.circle(output_image, (xCenter, yCenter), radius=3, color=(0,0,255), thickness=5)
         # cv2.rectangle(output_image, pt1=(xCenter - 256, yCenter + 256), pt2=(xCenter + 256, yCenter - 256), color=(0, 255, 0), thickness=width//200)
-        
-    return {"width":xCenter, "height":yCenter}
+    if len(results) > 0:    
+        return {"width":xCenter, "height":yCenter}
+    else:
+        return False
 
 if __name__ == '__main__':
     main()
