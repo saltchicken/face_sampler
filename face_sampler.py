@@ -39,10 +39,25 @@ def facecenter_squarecrop_image(image, face_center):
         #     # crop_width = [0 : min_dimension]
         
     else:
-        if face_center['height'] >= height / 2:
-            cropped_image = image[height - min_dimension : height, 0:width]
+        top_offset = face_center['height']
+        bottom_offset = height - face_center['height']
+        centered_min_dimension = min_dimension // 2
+        if centered_min_dimension > top_offset:
+            add_to_bottom = centered_min_dimension - top_offset
+            cropped_image = image[0:face_center['height']+centered_min_dimension+add_to_bottom, 0:width]
+        elif centered_min_dimension > bottom_offset:
+            add_to_top = centered_min_dimension - bottom_offset
+            cropped_image = image[face_center['height']-centered_min_dimension-add_to_top:height,0:width]
         else:
-            cropped_image = image[0 : min_dimension, 0:width]
+            # TODO Validate that the addition of 1 to the right_offset is necessary when the centered_min_dimension is odd which might mess with resizing. If issues this isn't necessary
+            if centered_min_dimension % 2 == 0:
+                cropped_image = image[face_center['height'] - centered_min_dimension:face_center['height']+centered_min_dimension]
+            else:
+                cropped_image = image[face_center['height'] - centered_min_dimension:face_center['height']+centered_min_dimension+1]
+        # if face_center['height'] >= height / 2:
+        #     cropped_image = image[height - min_dimension : height, 0:width]
+        # else:
+        #     cropped_image = image[0 : min_dimension, 0:width]
     return cropped_image
     
 
