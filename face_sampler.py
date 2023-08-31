@@ -27,7 +27,7 @@ def facecenter_squarecrop_image(image, face_center):
     
 
 def main():
-    parser = argparse.ArgumentParser(description="Automatically setup EBSynth.")
+    parser = argparse.ArgumentParser(description="Sample face from an image and force resolution to 512 X 512")
     
     parser.add_argument('-i', '--input', required=True, help='Input image')
     parser.add_argument('-o', '--output', default='output', type=str, help='Output folder')
