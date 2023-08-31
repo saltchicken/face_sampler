@@ -9,14 +9,34 @@ import tempfile
 
 def facecenter_squarecrop_image(image, face_center):
     height, width, _ = image.shape
+    # TODO Check if already 512 x 512
     min_dimension = min(height, width)
     if height == min_dimension:
-        if face_center['width'] >= width / 2:
-            cropped_image = image[0:height, width - min_dimension:width]
-            # crop_width = [width - min_dimension : width]
+        left_offset = face_center['width']
+        right_offset = width - face_center['width']
+        # print('face_center_width', face_center['width'])
+        # print('min_dimension', min_dimension)
+        centered_min_dimension = min_dimension // 2
+        if centered_min_dimension > left_offset:
+            add_to_right = centered_min_dimension - left_offset
+            # print('right_offset', face_center['width']+centered_min_dimension+add_to_right)
+            cropped_image = image[0:height, 0:face_center['width']+centered_min_dimension+add_to_right]
+        elif centered_min_dimension > right_offset:
+            add_to_left = centered_min_dimension - right_offset
+            # print('left_offset', face_center['width']-centered_min_dimension-add_to_left)
+            cropped_image = image[0:height,face_center['width']-centered_min_dimension-add_to_left:width]
         else:
-            cropped_image = image[0:height, 0:min_dimension]
-            # crop_width = [0 : min_dimension]
+            # TODO Validate that the addition of 1 to the right_offset is necessary when the centered_min_dimension is odd which might mess with resizing. If issues this isn't necessary
+            if centered_min_dimension % 2 == 0:
+                cropped_image = image[0:height, face_center['width']-centered_min_dimension:face_center['width']+centered_min_dimension]
+            else:
+                cropped_image = image[0:height, face_center['width']-centered_min_dimension:face_center['width']+centered_min_dimension+1]
+        # if face_center['width'] >= width / 2:
+        #     cropped_image = image[0:height, width - min_dimension:width]
+        #     # crop_width = [width - min_dimension : width]
+        # else:
+        #     cropped_image = image[0:height, 0:min_dimension]
+        #     # crop_width = [0 : min_dimension]
         
     else:
         if face_center['height'] >= height / 2:
