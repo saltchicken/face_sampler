@@ -60,16 +60,8 @@ def facecenter_squarecrop_image(image, face_center):
         #     cropped_image = image[0 : min_dimension, 0:width]
     return cropped_image
     
-
-def main():
-    parser = argparse.ArgumentParser(description="Sample face from an image and force resolution to 512 X 512")
-    
-    parser.add_argument('-i', '--input', required=True, help='Input image')
-    parser.add_argument('-o', '--output', default='output', type=str, help='Output folder')
-    
-    args = parser.parse_args()
-    
-    image = cv2.imread(args.input, cv2.IMREAD_UNCHANGED)
+def run_face_sampler(input, output):
+    image = cv2.imread(input, cv2.IMREAD_UNCHANGED)
     face_center = hogDetectFaces(image)
     cropped_image = facecenter_squarecrop_image(image, face_center)
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -77,10 +69,21 @@ def main():
         height, width, _ = cropped_image.shape
         if height < 512:
             # TODO Pass cropped_image cv2 object directly to pyesrgan
-            run_esrgan(temp_dir + '/saved.png', 'resized.png', resolution=(512,512))
+            run_esrgan(temp_dir + '/saved.png', output, resolution=(512,512))
         else:
             resized_image = cv2.resize(cropped_image, (512,512))
-            cv2.imwrite('resized.png', resized_image)
+            cv2.imwrite(output, resized_image)
+    
+def main():
+    parser = argparse.ArgumentParser(description="Sample face from an image and force resolution to 512 X 512")
+    
+    parser.add_argument('-i', '--input', required=True, help='Input image')
+    parser.add_argument('-o', '--output', default='output.png', type=str, help='Output folder')
+    
+    args = parser.parse_args()
+    run_face_sampler(args.input, args.output)
+    
+    
     
     # output_image = cv2.imread('resized.png', cv2.IMREAD_UNCHANGED)
     # cv2.imshow('output', output_image)
