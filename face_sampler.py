@@ -4,8 +4,10 @@ import argparse
 from time import time
 import matplotlib.pyplot as plt
 from pyesrgan import run_esrgan
+import os, sys
+from pyframes import video_to_frames
 import tempfile
-import subprocess, os
+
 
 def facecenter_squarecrop_image(image, face_center):
     height, width, _ = image.shape
@@ -75,38 +77,62 @@ def run_face_sampler(input, output):
             run_esrgan(temp_dir + '/saved.png', output, resolution=(512,512))
         else:
             resized_image = cv2.resize(cropped_image, (512,512))
+            print('output', output)
             cv2.imwrite(output, resized_image)
             
-def video_to_frames(input, output, rate):
-    ffmpeg_command = [
-        'ffmpeg',
-        '-i', input,
-        '-r', rate,
-        output + '/frames' + '/%05d.png'
-    ]
+# def video_to_frames(input, output, rate):
+#     ffmpeg_command = [
+#         'ffmpeg',
+#         '-i', input,
+#         '-r', rate,
+#         output + '/frames' + '/%05d.png'
+#     ]
 
-    # Run the ffmpeg command
-    try:
-        subprocess.run(ffmpeg_command, check=True)
-        print(f'Conversion complete.')
-    except subprocess.CalledProcessError as e:
-        print(f'Error during conversion: {e}')
+#     # Run the ffmpeg command
+#     try:
+#         subprocess.run(ffmpeg_command, check=True)
+#         print(f'Conversion complete.')
+#     except subprocess.CalledProcessError as e:
+#         print(f'Error during conversion: {e}')
+
+def run_face_sampler_on_video(input, output, rate):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        video_to_frames(input, temp_dir, rate)
+        run_face_sampler_on_folder(temp_dir, output)
         
-def run_face_sampler_on_folder(input):
-    directory_path = 'outputfolder/frames'
-    all_items = os.listdir(directory_path)
-    file_names = [item for item in all_items if os.path.isfile(os.path.join(directory_path, item))]
+def run_face_sampler_on_folder(input_path, output_folder):
+    print('Current working directory', os.getcwd())
+    if os.path.exists(output_folder):
+        print(f"The directory {output_folder} exists.")
+        # TODO: Check if folder is not empty and if so throw an error
+    else:
+        print(f"The directory '{output_folder}' does not exist.")
+        os.mkdir(output_folder)
+    all_items = os.listdir(input_path)
+    file_names = [item for item in all_items if os.path.isfile(os.path.join(input_path, item))]
     for file_name in file_names:
-        run_face_sampler(directory_path + '/' + file_name, file_name)
+        run_face_sampler(input_path + '/' + file_name, output_folder + '/' + file_name)
     
 def main():
     parser = argparse.ArgumentParser(description="Sample face from an image and force resolution to 512 X 512")
     
     parser.add_argument('-i', '--input', required=True, help='Input image')
     parser.add_argument('-o', '--output', default='output.png', type=str, help='Output folder')
+    parser.add_argument('-r', '--rate', default='10', type=str, help='Framerate for video conversion')
+    parser.add_argument('--video', action='store_true', help='Converting video to faces')
+    parser.add_argument('--folder', action='store_true', help='Converting folder of images to faces')
     
     args = parser.parse_args()
-    run_face_sampler(args.input, args.output)
+    
+    if args.video and args.folder:
+        print("Can't specify both video and folder")
+        sys.exit(1)
+    elif args.video:
+        run_face_sampler_on_video(args.input, args.output, args.rate)
+    elif args.folder:
+        run_face_sampler_on_folder(args.input, args.output)
+    else:
+        run_face_sampler(args.input, args.output)
     
     
     
@@ -121,7 +147,7 @@ def hogDetectFaces(image):
     # output_image = image.copy()
     imgRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = hog_face_detector(imgRGB, 0)
-    print(results)
+    # print(results)
 
     # TODO modify this for multiple faces. Right now it simply returning the last one it finds discarding others.
     for bbox in results:
