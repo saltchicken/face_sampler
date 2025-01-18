@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "face_sampler"
+version = "0.1"
+dependencies = [
+  "opencv-python==4.11.0.86",
+  "dlib==19.24.6",
+  "matplotlib==3.10.0"
+]
+
+[project.scripts]
+face_sampler = "face_sampler.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

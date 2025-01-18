@@ -2,6 +2,7 @@ import cv2
 import dlib
 import argparse
 from time import time
+# TODO: Remove need for matplotlib in favor of cv2
 import matplotlib.pyplot as plt
 import os, sys
 
