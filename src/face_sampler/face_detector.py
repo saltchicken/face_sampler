@@ -1,8 +1,6 @@
 import cv2
 import dlib
 from time import time
-# TODO: Remove need for matplotlib in favor of cv2
-import matplotlib.pyplot as plt
 import os, sys
 
 # from pyframes import video_to_frames
