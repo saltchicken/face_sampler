@@ -3,7 +3,6 @@ import dlib
 from time import time
 import os, sys
 
-# from pyframes import video_to_frames
 import tempfile
 import subprocess
 from PIL import Image
