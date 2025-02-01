@@ -8,6 +8,8 @@ version = "0.1"
 dependencies = [
   "opencv-python==4.11.0.86",
   "dlib==19.24.6",
+  "pillow==11.1.0",
+  "pyesrgan @ git+https://github.com/saltchicken/pyesrgan@f17849d5c1c40d0719d370f15c4db3490abd65c2"
 ]
 
 [project.scripts]
